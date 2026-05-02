@@ -1,22 +1,8 @@
 const router = require("express").Router();
-const { Blog, User } = require("../models");
-const jwt = require("jsonwebtoken");
-const { SECRET } = require("../util/config");
+const { Blog, User, Session } = require("../models");
 const { Op } = require("sequelize");
-
-const tokenExtractor = (req, res, next) => {
-  const authorization = req.get("authorization");
-  if (authorization && authorization.toLowerCase().startsWith("bearer ")) {
-    try {
-      req.decodedToken = jwt.verify(authorization.substring(7), SECRET);
-    } catch {
-      return res.status(401).json({ error: "token invalid" });
-    }
-  } else {
-    return res.status(401).json({ error: "token missing" });
-  }
-  next();
-};
+const tokenExtractor = require("../middleware/tokenExtractor");
+const sessionCheck = require("../middleware/sessionCheck");
 
 const blogFinder = async (req, res, next) => {
   req.blog = await Blog.findByPk(req.params.id);
@@ -55,20 +41,26 @@ router.get("/", async (req, res) => {
   res.json(blogs);
 });
 
-router.post("/", tokenExtractor, async (req, res) => {
+router.post("/", tokenExtractor, sessionCheck, async (req, res) => {
   const user = await User.findByPk(req.decodedToken.id);
   const blog = await Blog.create({ ...req.body, userId: user.id });
   return res.json(blog);
 });
 
-router.delete("/:id", blogFinder, tokenExtractor, async (req, res) => {
-  const user = await User.findByPk(req.decodedToken.id);
-  if (req.blog.userId !== user.id) {
-    return res.sendStatus(401);
-  }
-  await req.blog.destroy();
-  return res.sendStatus(200);
-});
+router.delete(
+  "/:id",
+  blogFinder,
+  tokenExtractor,
+  sessionCheck,
+  async (req, res) => {
+    const user = await User.findByPk(req.decodedToken.id);
+    if (req.blog.userId !== user.id) {
+      return res.sendStatus(401);
+    }
+    await req.blog.destroy();
+    return res.sendStatus(200);
+  },
+);
 
 router.put("/:id", blogFinder, async (req, res) => {
   const { likes } = req.body;
