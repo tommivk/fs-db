@@ -72,8 +72,8 @@ router.delete("/:id", blogFinder, tokenExtractor, async (req, res) => {
 
 router.put("/:id", blogFinder, async (req, res) => {
   const { likes } = req.body;
-  await req.blog.update({ likes });
-  return res.sendStatus(200);
+  const blog = await req.blog.update({ likes });
+  return res.json(blog);
 });
 
 module.exports = router;
