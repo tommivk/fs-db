@@ -36,6 +36,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install wait-on
+        run: npm install -g wait-on
+
       - name: Start application
         run: npm start > app.log 2>&1 &
         env:
