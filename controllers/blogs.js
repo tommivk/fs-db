@@ -1,51 +1,40 @@
 const router = require("express").Router();
 const { Blog } = require("../models");
 
-router.get("/", async (req, res) => {
-  try {
-    const blogs = await Blog.findAll();
-    res.json(blogs);
-  } catch (error) {
-    return res.status(500).json({ error });
+const blogFinder = async (req, res, next) => {
+  req.blog = await Blog.findByPk(req.params.id);
+  if (!req.blog) {
+    return res.status(404).end();
   }
+  next();
+};
+
+router.get("/", async (req, res) => {
+  const blogs = await Blog.findAll();
+  res.json(blogs);
 });
 
 router.post("/", async (req, res) => {
-  try {
-    const blog = await Blog.create({ ...req.body });
-    return res.json(blog);
-  } catch (error) {
-    return res.status(400).json({ error });
-  }
+  const blog = await Blog.create({ ...req.body });
+  return res.json(blog);
 });
 
-router.delete("/:id", async (req, res) => {
-  try {
-    const id = req.params.id;
-    const blog = await Blog.findByPk(id);
-    if (!blog) {
-      throw new Error(`Blog with id: ${id} not found`);
-    }
-    await blog.destroy();
-    return res.sendStatus(200);
-  } catch (error) {
-    return res.status(400).json({ error });
-  }
+router.delete("/:id", blogFinder, async (req, res) => {
+  await req.blog.destroy();
+  return res.sendStatus(200);
 });
 
-router.put("/:id", async (req, res) => {
-  try {
-    const id = req.params.id;
-    const { likes } = req.body;
-    const blog = await Blog.findByPk(id);
-    if (!blog) {
-      throw new Error(`Blog with id: ${id} not found`);
-    }
-    await blog.update({ likes });
-    return res.sendStatus(200);
-  } catch (error) {
-    return res.status(400).json({ error });
-  }
+router.put("/:id", blogFinder, async (req, res) => {
+  const { likes } = req.body;
+  await req.blog.update({ likes });
+  return res.sendStatus(200);
+});
+
+router.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500).json({
+    message: err.message || "Internal Server Error",
+  });
 });
 
 module.exports = router;
