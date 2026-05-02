@@ -15,6 +15,10 @@ User.init(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    password_hash: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
     username: {
       type: DataTypes.STRING,
       unique: true,

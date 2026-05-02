@@ -1,5 +1,5 @@
 const router = require("express").Router();
-
+const bcrypt = require("bcrypt");
 const { User, Blog, ReadingList } = require("../models");
 
 const userFinder = async (req, res, next) => {
@@ -43,7 +43,13 @@ router.get("/", async (req, res) => {
 });
 
 router.post("/", async (req, res) => {
-  const user = await User.create(req.body);
+  const { password, username, name } = req.body;
+  const passwordHash = await bcrypt.hash(password, 10);
+  const user = await User.create({
+    password_hash: passwordHash,
+    username,
+    name,
+  });
   res.json(user);
 });
 
