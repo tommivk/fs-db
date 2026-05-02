@@ -6,7 +6,7 @@ const Session = require("../models/session");
 
 router.delete("/", tokenExtractor, async (req, res) => {
   await Session.destroy({ where: { token: req.token } });
-  return res.sendStatus(200);
+  return res.sendStatus(204);
 });
 
 module.exports = router;
