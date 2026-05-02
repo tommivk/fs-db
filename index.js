@@ -2,6 +2,7 @@ require("dotenv").config();
 const { Sequelize, Model, DataTypes } = require("sequelize");
 const { PORT } = require("./util/config");
 const { connectToDatabase } = require("./util/db");
+const { Blog, User } = require("./models");
 const express = require("express");
 const app = express();
 
@@ -16,6 +17,16 @@ app.use("/api/blogs", blogsRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/login", loginRouter);
 app.use("/api/authors", authorsRouter);
+
+app.get("/", async (req, res) => {
+  return res.sendStatus(200);
+});
+
+app.post("/api/reset", async (req, res) => {
+  await Blog.destroy({ where: {}, truncate: true, cascade: true });
+  await User.destroy({ where: {}, truncate: true, cascade: true });
+  return res.sendStatus(200);
+});
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
